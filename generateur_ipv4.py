@@ -312,26 +312,42 @@ def expliquer_type(octets, scope):
             "   Hors des plages privees (RFC 1918) et des plages a usage particulier.")
 
 
-def expliquer_masque(prefixe):
+def expliquer_masque(prefixe, sens=None):
+    octs = prefixe_vers_masque(prefixe)
+    decimal = fmt(octs)
     pleins = prefixe // 8
     reste = prefixe % 8
-    octs = [255] * pleins
-    val = None
+
+    # Bloc A : masque -> /N (decompte des bits a 1, octet par octet)
+    lignes_a = ["  Masque -> /N : on compte les bits a 1, octet par octet."]
+    termes = []
+    for o in octs:
+        n = bin(o).count("1")
+        termes.append(str(n))
+        lignes_a.append(f"   {o:>3} = {o:08b}  ->  {n} bit(s) a 1")
+    lignes_a.append(f"   Total = {' + '.join(termes)} = {prefixe}   ->   /{prefixe}")
+    bloc_a = "\n".join(lignes_a)
+
+    # Bloc B : /N -> masque (construction)
+    lignes_b = [f"  /N -> masque : /{prefixe} = {prefixe} bits a 1 a gauche, le reste a 0."]
     if reste:
         val = 256 - 2 ** (8 - reste)
-        octs.append(val)
-    while len(octs) < 4:
-        octs.append(0)
-    decimal = fmt(octs[:4])
-    lignes = [f"  /{prefixe} = {prefixe} bits a 1 (a gauche), le reste a 0."]
-    if reste:
-        lignes.append(f"   {pleins} octet(s) a 255, puis un octet partiel de {reste} bit(s) :")
-        lignes.append(f"   256 - 2^(8-{reste}) = 256 - {2 ** (8 - reste)} = {val}")
+        lignes_b.append(f"   {pleins} octet(s) plein(s) a 255, puis un octet partiel de "
+                        f"{prefixe} - {pleins * 8} = {reste} bit(s) :")
+        lignes_b.append(f"   valeur de l'octet partiel = 256 - 2^(8-{reste}) "
+                        f"= 256 - {2 ** (8 - reste)} = {val}")
     else:
-        lignes.append(f"   {pleins} octet(s) a 255, le reste des octets a 0.")
-    lignes.append(f"   Masque decimal = {decimal}")
-    lignes.append("   Sens inverse : compte les bits a 1 (chaque 255 = 8 bits) pour retrouver /N.")
-    return "\n".join(lignes)
+        lignes_b.append(f"   {pleins} octet(s) a 255, les octets restants a 0.")
+    lignes_b.append(f"   Masque decimal = {decimal}")
+    bloc_b = "\n".join(lignes_b)
+
+    entete = f"  Equivalence :  {decimal}  <->  /{prefixe}"
+    # On met en premier le sens reellement demande par l'exercice.
+    if sens == "vers_prefixe":
+        corps = [bloc_a, bloc_b]
+    else:
+        corps = [bloc_b, bloc_a]
+    return entete + "\n" + "\n".join(corps)
 
 
 def expliquer_role(octets, prefixe):
@@ -471,7 +487,7 @@ def poser_exercice_masque(historique):
         enonce = f"{masque} -> /N"
 
     afficher_correction(champs)
-    explications = [expliquer_masque(prefixe)]
+    explications = [expliquer_masque(prefixe, sens)]
     print("\n  --- Explications ---")
     for bloc in explications:
         print(bloc)
