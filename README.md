@@ -39,7 +39,6 @@ Chaque réponse est corrigée et accompagnée d'une **explication détaillée pa
 - [Structure du projet](#structure-du-projet)
 - [Dépannage](#dépannage)
 - [Pistes d'amélioration](#pistes-damélioration)
-- [Licence](#licence)
 
 ---
 
