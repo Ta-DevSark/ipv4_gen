@@ -90,7 +90,7 @@ def construire_masque():
         "enonce": enonce,
         "record_enonce": record,
         "questions": [q],
-        "explications": [core.expliquer_masque(pref)],
+        "explications": [core.expliquer_masque(pref, sens)],
     }
 
 
@@ -159,12 +159,16 @@ class App(tk.Tk):
         reglages.pack(fill="x", padx=12, pady=6)
         ttk.Label(reglages, text="Mode :").grid(row=0, column=0, padx=6, pady=6, sticky="w")
         self.var_mode = tk.StringVar(value="Base")
-        ttk.Combobox(reglages, textvariable=self.var_mode, values=list(MODES),
-                     state="readonly", width=12).grid(row=0, column=1, padx=6, pady=6)
+        cb_mode = ttk.Combobox(reglages, textvariable=self.var_mode, values=list(MODES),
+                               state="readonly", width=12)
+        cb_mode.grid(row=0, column=1, padx=6, pady=6)
+        cb_mode.bind("<<ComboboxSelected>>", self._on_reglage_change)
         ttk.Label(reglages, text="Difficulte :").grid(row=0, column=2, padx=6, pady=6, sticky="w")
         self.var_diff = tk.StringVar(value="Mixte (/16-/30)")
-        ttk.Combobox(reglages, textvariable=self.var_diff, values=list(DIFFS),
-                     state="readonly", width=18).grid(row=0, column=3, padx=6, pady=6)
+        cb_diff = ttk.Combobox(reglages, textvariable=self.var_diff, values=list(DIFFS),
+                               state="readonly", width=18)
+        cb_diff.grid(row=0, column=3, padx=6, pady=6)
+        cb_diff.bind("<<ComboboxSelected>>", self._on_reglage_change)
 
         actions = ttk.Frame(self)
         actions.pack(fill="x", padx=12, pady=4)
@@ -206,6 +210,11 @@ class App(tk.Tk):
 
     def _diff(self):
         return DIFFS.get(self.var_diff.get(), "mix")
+
+    def _on_reglage_change(self, event=None):
+        # Le mode et la difficulte concernent l'exercice principal :
+        # tout changement regenere immediatement un exercice principal.
+        self.nouvel_principal()
 
     # --- generation / affichage ---
     def nouvel_principal(self):
