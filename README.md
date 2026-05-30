@@ -26,6 +26,7 @@ Chaque réponse est corrigée et accompagnée d'une **explication détaillée pa
 
 ## Sommaire
 
+- [Conseils pour un apprentissage optimal](#conseils-pour-un-apprentissage-optimal)
 - [Fonctionnalités](#fonctionnalités)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
@@ -34,7 +35,6 @@ Chaque réponse est corrigée et accompagnée d'une **explication détaillée pa
 - [Modes et difficulté](#modes-et-difficulté)
 - [Formats de réponse acceptés](#formats-de-réponse-acceptés)
 - [Historique et statistiques](#historique-et-statistiques)
-- [Conseils pour un apprentissage optimal](#conseils-pour-un-apprentissage-optimal)
 - [Rappel de la méthode](#rappel-de-la-méthode)
 - [Tableaux de référence](#tableaux-de-référence)
 - [Structure du projet](#structure-du-projet)
