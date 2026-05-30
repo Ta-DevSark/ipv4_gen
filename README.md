@@ -26,7 +26,6 @@ Chaque réponse est corrigée et accompagnée d'une **explication détaillée pa
 
 ## Sommaire
 
-- [Conseils pour un apprentissage optimal](#conseils-pour-un-apprentissage-optimal)
 - [Fonctionnalités](#fonctionnalités)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
