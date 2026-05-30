@@ -178,7 +178,10 @@ Pour trouver l'adresse réseau et le broadcast à partir d'une adresse + `/N` :
 
 **Exemple — `192.168.45.70 /23`** : `2^(32−23) = 512` adresses ; le 3e octet bouge par blocs de 2 ; `45` tombe dans le bloc `44` → réseau `192.168.44.0`, broadcast `192.168.45.255`.
 
-**Conversion de masque** : un `/N` a `N` bits à 1 à gauche. Pour l'octet partiel, la valeur est `256 − 2^(8 − reste)` où `reste = N mod 8`. Exemple : `/26` → reste 2 → `256 − 64 = 192` → `255.255.255.192`.
+**Conversion de masque** — dans les deux sens :
+
+- **`/N` → masque** : un `/N` a `N` bits à 1 à gauche, le reste à 0. Chaque octet plein vaut `255`. Pour l'octet partiel, la valeur est `256 − 2^(8 − reste)` où `reste = N mod 8`. Exemple : `/26` → reste 2 → `256 − 2⁶ = 256 − 64 = 192` → `255.255.255.192`.
+- **masque → `/N`** : on compte les bits à 1, octet par octet (chaque `255` = 8 bits). Exemple : `255.255.255.224` → `255`=8, `255`=8, `255`=8, `224 = 11100000`=3 → total `8 + 8 + 8 + 3 = 27` → `/27`.
 
 ---
 
