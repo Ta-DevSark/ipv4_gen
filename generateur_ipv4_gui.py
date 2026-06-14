@@ -1,31 +1,62 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generateur d'exercices IPv4 - interface graphique (tkinter)
-===========================================================
-Version graphique du generateur. Elle reutilise toute la logique de calcul
-du fichier generateur_ipv4.py (qui doit se trouver dans le meme dossier) et
-partage le meme historique (historique_exercices.json).
+Generateur d'exercices reseau - interface graphique (customtkinter)
+===================================================================
+Interface moderne basee sur customtkinter. Elle reutilise toute la logique de
+calcul du fichier generateur_ipv4.py (qui doit se trouver dans le meme dossier)
+et les questions de cours du fichier questions_cours.py. L'historique des
+exercices notes est partage avec le CLI (historique_exercices.json).
 
-Lancer avec :  python3 generateur_ipv4_gui.py
+Quatre sections (barre laterale) :
+  * Sous-reseau IPv4   -> exercice principal (reseau, broadcast, classe, type...)
+  * Masque <-> /N      -> conversion de masque dans les deux sens
+  * Questions de cours -> 20 questions theoriques, reponse libre + correction
+  * Conversion de bases -> convertisseur binaire / decimal / hexadecimal
 
-Remarque : tkinter fait partie de la bibliotheque standard de Python. Sous
-Windows et macOS il est inclus par defaut. Sous Linux, si l'import echoue,
-installer le paquet systeme :  sudo apt install python3-tk
+Lancer avec :  python generateur_ipv4_gui.py
+
+Dependance : customtkinter  ->  pip install customtkinter
+(tkinter fait partie de la bibliotheque standard de Python.)
 """
 
 import random
+import sys
 import tkinter as tk
-from tkinter import ttk, messagebox
-from tkinter.scrolledtext import ScrolledText
+from tkinter import messagebox
+
+try:
+    import customtkinter as ctk
+except ImportError:
+    # Message clair au lieu d'une fenetre qui s'ouvre et se ferme aussitot
+    # (typiquement quand on lance le script avec un interpreteur Python ou
+    # customtkinter n'est pas installe, par ex. en double-cliquant le fichier).
+    _r = tk.Tk()
+    _r.withdraw()
+    messagebox.showerror(
+        "Dependance manquante : customtkinter",
+        "Le module « customtkinter » n'est pas installe pour cet interpreteur :\n\n"
+        f"{sys.executable}\n\n"
+        "Installe-le avec la commande :\n\n"
+        f'    "{sys.executable}" -m pip install customtkinter\n\n'
+        "puis relance l'application.")
+    _r.destroy()
+    sys.exit(1)
 
 import generateur_ipv4 as core
+import questions_cours
 
-VERT = "#198754"
-ROUGE = "#c0392b"
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
+
+VERT = "#2fa572"    # succes
+ROUGE = "#d9534f"   # erreur
+GRIS = ("gray45", "gray60")
+TEXTE = ("gray10", "gray90")
 
 MODES = {"Base": "base", "Complet": "complet"}
 DIFFS = {"4e octet (/25-/30)": "o4", "3e octet (/17-/24)": "o3", "Mixte (/16-/30)": "mix"}
+BASES = {"Binaire (2)": 2, "Decimal (10)": 10, "Hexadecimal (16)": 16}
 
 
 # ---------------------------------------------------------------------------
@@ -133,120 +164,78 @@ def agreger_statistiques(historique):
 
 
 # ---------------------------------------------------------------------------
-# Interface graphique
+# Sections "exercice note" (sous-reseau IPv4 et masque)
 # ---------------------------------------------------------------------------
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Generateur d'exercices IPv4")
-        self.geometry("740x720")
-        self.minsize(640, 600)
+class CadreExercice(ctk.CTkFrame):
+    """Base commune aux exercices notes : champs a remplir, verification,
+    explications et enregistrement dans l'historique."""
 
-        self.historique = core.charger_historique()
+    def __init__(self, parent, app):
+        super().__init__(parent, fg_color="transparent")
+        self.app = app
         self.current = None
         self.entries = []
         self.recorded = False
+        self._build()
+        self.nouveau()
 
-        self._construire_interface()
-        self.nouvel_principal()
+    # --- a redefinir par les sous-classes ---
+    def _construire_controles(self, parent):
+        pass
 
-    # --- construction de la fenetre ---
-    def _construire_interface(self):
-        tk.Label(self, text="Generateur d'exercices IPv4",
-                 font=("Helvetica", 16, "bold")).pack(pady=(12, 4))
+    def generer(self):
+        raise NotImplementedError
 
-        reglages = ttk.LabelFrame(self, text="Reglages")
-        reglages.pack(fill="x", padx=12, pady=6)
-        ttk.Label(reglages, text="Mode :").grid(row=0, column=0, padx=6, pady=6, sticky="w")
-        self.var_mode = tk.StringVar(value="Base")
-        cb_mode = ttk.Combobox(reglages, textvariable=self.var_mode, values=list(MODES),
-                               state="readonly", width=12)
-        cb_mode.grid(row=0, column=1, padx=6, pady=6)
-        cb_mode.bind("<<ComboboxSelected>>", self._on_reglage_change)
-        ttk.Label(reglages, text="Difficulte :").grid(row=0, column=2, padx=6, pady=6, sticky="w")
-        self.var_diff = tk.StringVar(value="Mixte (/16-/30)")
-        cb_diff = ttk.Combobox(reglages, textvariable=self.var_diff, values=list(DIFFS),
-                               state="readonly", width=18)
-        cb_diff.grid(row=0, column=3, padx=6, pady=6)
-        cb_diff.bind("<<ComboboxSelected>>", self._on_reglage_change)
+    # --- construction commune ---
+    def _build(self):
+        self.controles = ctk.CTkFrame(self, fg_color="transparent")
+        self.controles.pack(fill="x", padx=4, pady=(2, 0))
+        self._construire_controles(self.controles)
 
-        actions = ttk.Frame(self)
-        actions.pack(fill="x", padx=12, pady=4)
-        ttk.Button(actions, text="Exercice principal",
-                   command=self.nouvel_principal).pack(side="left", padx=4)
-        ttk.Button(actions, text="Conversion de masque",
-                   command=self.nouvelle_conversion).pack(side="left", padx=4)
-        ttk.Button(actions, text="Statistiques",
-                   command=self.ouvrir_stats).pack(side="right", padx=4)
-        ttk.Button(actions, text="Historique",
-                   command=self.ouvrir_historique).pack(side="right", padx=4)
+        carte = ctk.CTkFrame(self)
+        carte.pack(fill="x", padx=4, pady=10)
+        self.lbl_enonce = ctk.CTkLabel(carte, text="", font=self.app.font_enonce)
+        self.lbl_enonce.pack(anchor="w", padx=14, pady=(12, 8))
+        self.cadre_champs = ctk.CTkFrame(carte, fg_color="transparent")
+        self.cadre_champs.pack(fill="x", padx=14, pady=(0, 8))
 
-        self.cadre_exo = ttk.LabelFrame(self, text="Exercice")
-        self.cadre_exo.pack(fill="x", padx=12, pady=6)
-
-        self.lbl_enonce = tk.Label(self.cadre_exo, text="", font=("Courier", 14, "bold"))
-        self.lbl_enonce.pack(anchor="w", padx=10, pady=(8, 6))
-
-        self.cadre_champs = ttk.Frame(self.cadre_exo)
-        self.cadre_champs.pack(fill="x", padx=10)
-
-        barre = ttk.Frame(self.cadre_exo)
-        barre.pack(fill="x", padx=10, pady=8)
-        self.btn_verifier = ttk.Button(barre, text="Verifier", command=self.verifier)
+        barre = ctk.CTkFrame(carte, fg_color="transparent")
+        barre.pack(fill="x", padx=14, pady=(0, 12))
+        self.btn_verifier = ctk.CTkButton(barre, text="Verifier", width=120, command=self.verifier)
         self.btn_verifier.pack(side="left")
-        ttk.Button(barre, text="Nouvel exercice", command=self.regenerer).pack(side="left", padx=6)
-        self.lbl_score = tk.Label(barre, text="", font=("Helvetica", 11, "bold"))
+        ctk.CTkButton(barre, text="Nouvel exercice", width=150, fg_color="transparent",
+                      border_width=1, text_color=TEXTE, command=self.nouveau).pack(side="left", padx=8)
+        self.lbl_score = ctk.CTkLabel(barre, text="", font=self.app.font_bold)
         self.lbl_score.pack(side="right")
 
-        cadre_expl = ttk.LabelFrame(self, text="Explications")
-        cadre_expl.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-        self.txt_expl = ScrolledText(cadre_expl, height=12, font=("Courier", 10), wrap="word")
-        self.txt_expl.pack(fill="both", expand=True, padx=6, pady=6)
+        carte2 = ctk.CTkFrame(self)
+        carte2.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+        ctk.CTkLabel(carte2, text="Explications", font=self.app.font_bold,
+                     anchor="w").pack(anchor="w", padx=14, pady=(10, 0))
+        self.txt_expl = ctk.CTkTextbox(carte2, wrap="word", font=self.app.font_mono)
+        self.txt_expl.pack(fill="both", expand=True, padx=14, pady=12)
         self.txt_expl.configure(state="disabled")
 
-    # --- helpers reglages ---
-    def _mode(self):
-        return MODES.get(self.var_mode.get(), "base")
+    def nouveau(self):
+        self.generer()
+        self.afficher()
 
-    def _diff(self):
-        return DIFFS.get(self.var_diff.get(), "mix")
-
-    def _on_reglage_change(self, event=None):
-        # Le mode et la difficulte concernent l'exercice principal :
-        # tout changement regenere immediatement un exercice principal.
-        self.nouvel_principal()
-
-    # --- generation / affichage ---
-    def nouvel_principal(self):
-        self.current = construire_principal(self._mode(), self._diff())
-        self.afficher_exercice()
-
-    def nouvelle_conversion(self):
-        self.current = construire_masque()
-        self.afficher_exercice()
-
-    def regenerer(self):
-        if self.current and self.current["type"] == "masque":
-            self.nouvelle_conversion()
-        else:
-            self.nouvel_principal()
-
-    def afficher_exercice(self):
+    def afficher(self):
         for w in self.cadre_champs.winfo_children():
             w.destroy()
         self.entries = []
         self.recorded = False
-        self.lbl_enonce.config(text=self.current["enonce"])
-        self.lbl_score.config(text="")
-        self.btn_verifier.config(state="normal")
+        self.lbl_enonce.configure(text=self.current["enonce"])
+        self.lbl_score.configure(text="")
+        self.btn_verifier.configure(state="normal")
 
         for i, q in enumerate(self.current["questions"]):
-            tk.Label(self.cadre_champs, text=q["label"] + " :", anchor="w", width=34).grid(
-                row=i, column=0, sticky="w", pady=3)
-            entry = ttk.Entry(self.cadre_champs, width=22)
-            entry.grid(row=i, column=1, padx=6, pady=3)
-            statut = tk.Label(self.cadre_champs, text="", anchor="w")
-            statut.grid(row=i, column=2, sticky="w")
+            ctk.CTkLabel(self.cadre_champs, text=q["label"] + " :", anchor="w",
+                         font=self.app.font_label).grid(row=i, column=0, sticky="w", padx=(2, 10), pady=5)
+            entry = ctk.CTkEntry(self.cadre_champs, width=200)
+            entry.grid(row=i, column=1, padx=4, pady=5)
+            statut = ctk.CTkLabel(self.cadre_champs, text="", anchor="w", font=self.app.font_label)
+            statut.grid(row=i, column=2, sticky="w", padx=(10, 2))
             self.entries.append((q, entry, statut))
 
         for idx, (_, entry, _) in enumerate(self.entries):
@@ -262,10 +251,10 @@ class App(tk.Tk):
     def _ecrire_explications(self, texte):
         self.txt_expl.configure(state="normal")
         self.txt_expl.delete("1.0", "end")
-        self.txt_expl.insert("1.0", texte)
+        if texte:
+            self.txt_expl.insert("1.0", texte)
         self.txt_expl.configure(state="disabled")
 
-    # --- correction ---
     def verifier(self):
         if self.recorded or not self.current:
             return
@@ -274,109 +263,406 @@ class App(tk.Tk):
         for q, entry, statut in self.entries:
             ok = evaluer_champ(q["kind"], entry.get(), q["val"])
             if ok:
-                statut.config(text="OK", fg=VERT)
+                statut.configure(text="OK", text_color=VERT)
                 bons += 1
             else:
-                statut.config(text="X  attendu : " + q["str"], fg=ROUGE)
+                statut.configure(text="X  attendu : " + q["str"], text_color=ROUGE)
             champs.append({"libelle": q["label"], "attendu": q["str"], "ok": ok})
 
-        self.lbl_score.config(text=f"Score : {bons}/{len(self.entries)}",
-                              fg=(VERT if bons == len(self.entries) else ROUGE))
+        total = len(self.entries)
+        self.lbl_score.configure(text=f"Score : {bons}/{total}",
+                                 text_color=(VERT if bons == total else ROUGE))
         self._ecrire_explications("\n\n".join(self.current["explications"]))
-        self.btn_verifier.config(state="disabled")
+        self.btn_verifier.configure(state="disabled")
 
-        core.enregistrer(self.historique, self.current["type"],
+        core.enregistrer(self.app.historique, self.current["type"],
                          self.current.get("record_enonce", self.current["enonce"]),
                          champs, self.current["explications"])
         self.recorded = True
 
-    # --- fenetres historique / stats ---
-    def ouvrir_historique(self):
-        win = tk.Toplevel(self)
-        win.title("Historique")
-        win.geometry("620x500")
-        if not self.historique:
-            tk.Label(win, text="Aucun exercice pour l'instant.", padx=20, pady=20).pack()
+
+class CadreIPv4(CadreExercice):
+    def _construire_controles(self, parent):
+        ctk.CTkLabel(parent, text="Mode :", font=self.app.font_label).pack(side="left", padx=(2, 6))
+        self.var_mode = tk.StringVar(value="Base")
+        ctk.CTkOptionMenu(parent, variable=self.var_mode, values=list(MODES), width=120,
+                          command=lambda _v: self.nouveau()).pack(side="left", padx=4)
+        ctk.CTkLabel(parent, text="Difficulte :", font=self.app.font_label).pack(side="left", padx=(18, 6))
+        self.var_diff = tk.StringVar(value="Mixte (/16-/30)")
+        ctk.CTkOptionMenu(parent, variable=self.var_diff, values=list(DIFFS), width=180,
+                          command=lambda _v: self.nouveau()).pack(side="left", padx=4)
+
+    def generer(self):
+        self.current = construire_principal(MODES.get(self.var_mode.get(), "base"),
+                                            DIFFS.get(self.var_diff.get(), "mix"))
+
+
+class CadreMasque(CadreExercice):
+    def _construire_controles(self, parent):
+        ctk.CTkLabel(parent, text="Conversion de masque   ( /N  <->  masque decimal )",
+                     font=self.app.font_label, anchor="w").pack(side="left", padx=2)
+
+    def generer(self):
+        self.current = construire_masque()
+
+
+# ---------------------------------------------------------------------------
+# Section "Questions de cours"
+# ---------------------------------------------------------------------------
+class CadreQuestions(ctk.CTkFrame):
+    def __init__(self, parent, app):
+        super().__init__(parent, fg_color="transparent")
+        self.app = app
+        self.questions = questions_cours.QUESTIONS_COURS
+        self.index = 0
+        self._wrap_job = None
+        self._build()
+        self.bind("<Configure>", self._maj_wrap)
+        self.afficher_question()
+
+    def _build(self):
+        haut = ctk.CTkFrame(self, fg_color="transparent")
+        haut.pack(fill="x", padx=4, pady=(2, 0))
+        self.lbl_compteur = ctk.CTkLabel(haut, text="", font=self.app.font_bold)
+        self.lbl_compteur.pack(side="left", padx=2)
+        ctk.CTkButton(haut, text="Suivant >", width=104, command=self.suivant).pack(side="right", padx=4)
+        ctk.CTkButton(haut, text="Aleatoire", width=104, fg_color="transparent", border_width=1,
+                      text_color=TEXTE, command=self.aleatoire).pack(side="right", padx=4)
+        ctk.CTkButton(haut, text="< Precedent", width=104, fg_color="transparent", border_width=1,
+                      text_color=TEXTE, command=self.precedent).pack(side="right", padx=4)
+
+        carte_q = ctk.CTkFrame(self)
+        carte_q.pack(fill="x", padx=4, pady=10)
+        ctk.CTkLabel(carte_q, text="Question", font=self.app.font_h2,
+                     anchor="w").pack(anchor="w", padx=14, pady=(12, 2))
+        self.lbl_question = ctk.CTkLabel(carte_q, text="", justify="left", anchor="w",
+                                         font=self.app.font_label, wraplength=620)
+        self.lbl_question.pack(anchor="w", fill="x", padx=14, pady=(0, 14))
+
+        carte_r = ctk.CTkFrame(self)
+        carte_r.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+        ctk.CTkLabel(carte_r, text="Ta reponse", font=self.app.font_bold,
+                     anchor="w").pack(anchor="w", padx=14, pady=(10, 2))
+        self.txt_reponse = ctk.CTkTextbox(carte_r, wrap="word", height=120, font=self.app.font_label)
+        self.txt_reponse.pack(fill="x", padx=14, pady=(0, 8))
+        self.btn_montrer = ctk.CTkButton(carte_r, text="Montrer la reponse", command=self.montrer)
+        self.btn_montrer.pack(anchor="w", padx=14, pady=(0, 10))
+        ctk.CTkLabel(carte_r, text="Reponse modele", font=self.app.font_bold,
+                     anchor="w").pack(anchor="w", padx=14, pady=(2, 2))
+        self.lbl_solution = ctk.CTkLabel(carte_r, text="", justify="left", anchor="w",
+                                         font=self.app.font_label, wraplength=620)
+        self.lbl_solution.pack(anchor="w", fill="x", padx=14, pady=(0, 14))
+
+    def _maj_wrap(self, _event=None):
+        # Les evenements <Configure> arrivent par rafales pendant un
+        # redimensionnement : on coalesce en une seule mise a jour differee.
+        if self._wrap_job is not None:
+            self.after_cancel(self._wrap_job)
+        self._wrap_job = self.after(60, self._appliquer_wrap)
+
+    def _appliquer_wrap(self):
+        self._wrap_job = None
+        largeur = max(self.winfo_width() - 70, 280)
+        self.lbl_question.configure(wraplength=largeur)
+        self.lbl_solution.configure(wraplength=largeur)
+
+    def afficher_question(self):
+        item = self.questions[self.index]
+        self.lbl_compteur.configure(text=f"Question {self.index + 1} / {len(self.questions)}")
+        self.lbl_question.configure(text=item["q"])
+        self.txt_reponse.delete("1.0", "end")
+        self.lbl_solution.configure(
+            text="(Clique sur « Montrer la reponse » pour l'afficher.)", text_color=GRIS)
+        self.btn_montrer.configure(state="normal")
+
+    def montrer(self):
+        self.lbl_solution.configure(text=self.questions[self.index]["r"], text_color=TEXTE)
+        self.btn_montrer.configure(state="disabled")
+
+    def suivant(self):
+        self.index = (self.index + 1) % len(self.questions)
+        self.afficher_question()
+
+    def precedent(self):
+        self.index = (self.index - 1) % len(self.questions)
+        self.afficher_question()
+
+    def aleatoire(self):
+        n = len(self.questions)
+        if n > 1:
+            nouveau = self.index
+            while nouveau == self.index:
+                nouveau = random.randrange(n)
+            self.index = nouveau
+        self.afficher_question()
+
+
+# ---------------------------------------------------------------------------
+# Section "Conversion de bases"
+# ---------------------------------------------------------------------------
+class CadreConversion(ctk.CTkFrame):
+    def __init__(self, parent, app):
+        super().__init__(parent, fg_color="transparent")
+        self.app = app
+        self._build()
+
+    def _build(self):
+        carte = ctk.CTkFrame(self)
+        carte.pack(fill="x", padx=4, pady=10)
+        ctk.CTkLabel(carte, text="Conversion entre bases (binaire / decimal / hexadecimal)",
+                     font=self.app.font_h2, anchor="w").pack(anchor="w", padx=14, pady=(12, 10))
+
+        form = ctk.CTkFrame(carte, fg_color="transparent")
+        form.pack(fill="x", padx=14, pady=(0, 8))
+        ctk.CTkLabel(form, text="Nombre :", font=self.app.font_label).grid(
+            row=0, column=0, sticky="w", padx=2, pady=6)
+        self.entry = ctk.CTkEntry(form, width=260, placeholder_text="ex. 1010   255   FF")
+        self.entry.grid(row=0, column=1, columnspan=3, sticky="w", padx=4, pady=6)
+        self.entry.bind("<Return>", lambda e: self.convertir())
+
+        ctk.CTkLabel(form, text="De la base :", font=self.app.font_label).grid(
+            row=1, column=0, sticky="w", padx=2, pady=6)
+        self.var_src = tk.StringVar(value="Decimal (10)")
+        ctk.CTkOptionMenu(form, variable=self.var_src, values=list(BASES), width=170).grid(
+            row=1, column=1, sticky="w", padx=4, pady=6)
+        ctk.CTkLabel(form, text="vers la base :", font=self.app.font_label).grid(
+            row=1, column=2, sticky="w", padx=(18, 4), pady=6)
+        self.var_dst = tk.StringVar(value="Binaire (2)")
+        ctk.CTkOptionMenu(form, variable=self.var_dst, values=list(BASES), width=170).grid(
+            row=1, column=3, sticky="w", padx=4, pady=6)
+
+        boutons = ctk.CTkFrame(carte, fg_color="transparent")
+        boutons.pack(fill="x", padx=14, pady=(0, 12))
+        ctk.CTkButton(boutons, text="Convertir", width=130, command=self.convertir).pack(side="left")
+        ctk.CTkButton(boutons, text="Inverser les bases", width=170, fg_color="transparent",
+                      border_width=1, text_color=TEXTE, command=self.inverser).pack(side="left", padx=8)
+
+        carte_res = ctk.CTkFrame(self)
+        carte_res.pack(fill="x", padx=4, pady=(0, 10))
+        ctk.CTkLabel(carte_res, text="Resultat", font=self.app.font_bold,
+                     anchor="w").pack(anchor="w", padx=14, pady=(10, 0))
+        self.lbl_resultat = ctk.CTkLabel(carte_res, text="—",
+                                         font=ctk.CTkFont(family="Consolas", size=26, weight="bold"))
+        self.lbl_resultat.pack(anchor="w", padx=14, pady=(2, 12))
+
+        carte_met = ctk.CTkFrame(self)
+        carte_met.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+        ctk.CTkLabel(carte_met, text="Methode pas a pas", font=self.app.font_bold,
+                     anchor="w").pack(anchor="w", padx=14, pady=(10, 0))
+        self.txt_methode = ctk.CTkTextbox(carte_met, wrap="word", font=self.app.font_mono)
+        self.txt_methode.pack(fill="both", expand=True, padx=14, pady=12)
+        self.txt_methode.configure(state="disabled")
+
+    def inverser(self):
+        s, d = self.var_src.get(), self.var_dst.get()
+        self.var_src.set(d)
+        self.var_dst.set(s)
+        self.convertir()
+
+    def convertir(self):
+        base_src = BASES[self.var_src.get()]
+        base_dst = BASES[self.var_dst.get()]
+        n = core.parse_nombre(self.entry.get(), base_src)
+        if n is None:
+            self.lbl_resultat.configure(text="Saisie invalide", text_color=ROUGE)
+            self._ecrire_methode(
+                f"« {self.entry.get().strip()} » n'est pas un nombre valide en base "
+                f"{base_src} ({core.NOM_BASE[base_src]}).\n"
+                f"Chiffres autorises : {core._CHIFFRES_BASE[base_src]}")
             return
-        haut = ttk.Frame(win)
-        haut.pack(fill="both", expand=True)
-        arbre = ttk.Treeview(haut, columns=("date", "score"), show="tree headings")
-        arbre.heading("#0", text="Exercice")
-        arbre.heading("date", text="Date")
-        arbre.heading("score", text="Score")
-        arbre.column("#0", width=320)
-        arbre.column("date", width=130, anchor="center")
-        arbre.column("score", width=70, anchor="center")
-        arbre.pack(fill="both", expand=True, side="left")
-        defil = ttk.Scrollbar(haut, orient="vertical", command=arbre.yview)
-        defil.pack(side="right", fill="y")
-        arbre.configure(yscrollcommand=defil.set)
+        self.lbl_resultat.configure(text=core.convertir_base(n, base_dst), text_color=TEXTE)
+        self._ecrire_methode(core.expliquer_conversion(n, base_src, base_dst))
 
-        item_vers_entree = {}
-        for e in reversed(self.historique):
-            champs = e.get("champs", [])
-            b = sum(1 for c in champs if c["ok"])
-            parent = arbre.insert("", "end",
-                                  text=f"[{e.get('exercice', '?')}] {e.get('enonce', '')}",
-                                  values=(e.get("date", ""), f"{b}/{len(champs)}"))
-            item_vers_entree[parent] = e
-            for c in champs:
-                marque = "OK" if c["ok"] else "X"
-                arbre.insert(parent, "end",
-                             text=f"   {marque}  {c['libelle']}",
-                             values=("", "attendu : " + c["attendu"]))
+    def _ecrire_methode(self, texte):
+        self.txt_methode.configure(state="normal")
+        self.txt_methode.delete("1.0", "end")
+        self.txt_methode.insert("1.0", texte)
+        self.txt_methode.configure(state="disabled")
 
-        ttk.Label(win, text="Explications de l'exercice selectionne :").pack(anchor="w", padx=8)
-        panneau = ScrolledText(win, height=12, font=("Courier", 10), wrap="word")
-        panneau.pack(fill="both", expand=True, padx=6, pady=(0, 6))
-        panneau.configure(state="disabled")
 
-        def afficher_expl(_event=None):
-            sel = arbre.selection()
-            if not sel:
-                return
-            item = sel[0]
-            entree = item_vers_entree.get(item) or item_vers_entree.get(arbre.parent(item))
-            texte = "\n\n".join(entree.get("explications", [])) if entree else ""
-            if not texte:
-                texte = "(Aucune explication enregistree pour cet exercice.)"
-            panneau.configure(state="normal")
-            panneau.delete("1.0", "end")
-            panneau.insert("1.0", texte)
-            panneau.configure(state="disabled")
+# ---------------------------------------------------------------------------
+# Fenetre principale
+# ---------------------------------------------------------------------------
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Generateur d'exercices reseau")
+        self.geometry("980x720")
+        self.minsize(860, 620)
 
-        arbre.bind("<<TreeviewSelect>>", afficher_expl)
+        self.historique = core.charger_historique()
 
-        ttk.Button(win, text="Effacer l'historique",
-                   command=lambda: self._effacer(win)).pack(side="bottom", pady=6)
+        self.font_title = ctk.CTkFont(size=20, weight="bold")
+        self.font_h2 = ctk.CTkFont(size=16, weight="bold")
+        self.font_bold = ctk.CTkFont(size=14, weight="bold")
+        self.font_label = ctk.CTkFont(size=13)
+        self.font_enonce = ctk.CTkFont(family="Consolas", size=18, weight="bold")
+        self.font_mono = ctk.CTkFont(family="Consolas", size=12)
+
+        self._build()
+
+    def _build(self):
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        # --- barre laterale ---
+        side = ctk.CTkFrame(self, width=212, corner_radius=0)
+        side.grid(row=0, column=0, sticky="nsew")
+        side.grid_propagate(False)
+
+        ctk.CTkLabel(side, text="Reseau IPv4", font=self.font_title).pack(padx=20, pady=(22, 0))
+        ctk.CTkLabel(side, text="Entrainement", font=self.font_label,
+                     text_color=GRIS).pack(padx=20, pady=(0, 18))
+
+        self.nav_boutons = {}
+        for nom in ("Sous-reseau IPv4", "Masque <-> /N", "Questions de cours", "Conversion de bases"):
+            b = ctk.CTkButton(side, text=nom, anchor="w", fg_color="transparent",
+                              text_color=TEXTE, command=lambda n=nom: self.afficher_section(n))
+            b.pack(fill="x", padx=12, pady=3)
+            self.nav_boutons[nom] = b
+
+        ctk.CTkFrame(side, fg_color="transparent").pack(fill="both", expand=True)
+
+        ctk.CTkButton(side, text="Historique", fg_color="transparent", border_width=1,
+                      text_color=TEXTE, command=self.ouvrir_historique).pack(fill="x", padx=12, pady=3)
+        ctk.CTkButton(side, text="Statistiques", fg_color="transparent", border_width=1,
+                      text_color=TEXTE, command=self.ouvrir_stats).pack(fill="x", padx=12, pady=(3, 14))
+        ctk.CTkLabel(side, text="Apparence", font=self.font_label,
+                     anchor="w").pack(fill="x", padx=16)
+        self.var_apparence = tk.StringVar(value="Systeme")
+        ctk.CTkOptionMenu(side, variable=self.var_apparence, values=["Systeme", "Clair", "Sombre"],
+                          command=self._changer_apparence).pack(fill="x", padx=12, pady=(2, 16))
+
+        # --- zone de contenu (les sections se superposent, on en montre une) ---
+        self.contenu = ctk.CTkFrame(self, fg_color="transparent")
+        self.contenu.grid(row=0, column=1, sticky="nsew", padx=16, pady=16)
+        self.contenu.grid_rowconfigure(0, weight=1)
+        self.contenu.grid_columnconfigure(0, weight=1)
+
+        self.sections = {
+            "Sous-reseau IPv4": CadreIPv4(self.contenu, self),
+            "Masque <-> /N": CadreMasque(self.contenu, self),
+            "Questions de cours": CadreQuestions(self.contenu, self),
+            "Conversion de bases": CadreConversion(self.contenu, self),
+        }
+        for cadre in self.sections.values():
+            cadre.grid(row=0, column=0, sticky="nsew")
+
+        self.afficher_section("Sous-reseau IPv4")
+
+    def afficher_section(self, nom):
+        self.sections[nom].tkraise()
+        for n, b in self.nav_boutons.items():
+            b.configure(fg_color=("gray75", "gray25") if n == nom else "transparent")
+
+    def _changer_apparence(self, choix):
+        ctk.set_appearance_mode({"Systeme": "System", "Clair": "Light", "Sombre": "Dark"}[choix])
+
+    # --- fenetre historique ---
+    def ouvrir_historique(self):
+        win = ctk.CTkToplevel(self)
+        win.title("Historique")
+        win.geometry("720x560")
+        win.transient(self)
+        win.after(120, win.lift)
+
+        if not self.historique:
+            ctk.CTkLabel(win, text="Aucun exercice pour l'instant.",
+                         font=self.font_label).pack(padx=20, pady=20)
+            return
+
+        ctk.CTkLabel(win, text="Historique des exercices",
+                     font=self.font_h2).pack(anchor="w", padx=16, pady=(14, 4))
+        liste = ctk.CTkScrollableFrame(win)
+        liste.pack(fill="both", expand=True, padx=12, pady=8)
+        # On limite le rendu aux plus recents : chaque carte cree une dizaine de
+        # widgets customtkinter, et l'historique grossit sans fin au fil des sessions.
+        LIMITE = 100
+        recents = list(reversed(self.historique))
+        for e in recents[:LIMITE]:
+            self._carte_historique(liste, e)
+        if len(recents) > LIMITE:
+            ctk.CTkLabel(liste, text=f"... {len(recents) - LIMITE} exercice(s) plus ancien(s) masque(s)",
+                         text_color=GRIS).pack(pady=6)
+        ctk.CTkButton(win, text="Effacer l'historique", fg_color=ROUGE, hover_color="#b34741",
+                      command=lambda: self._effacer(win)).pack(pady=10)
+
+    def _carte_historique(self, parent, e):
+        champs = e.get("champs", [])
+        bons = sum(1 for c in champs if c["ok"])
+        total = len(champs)
+        parfait = total > 0 and bons == total
+
+        carte = ctk.CTkFrame(parent)
+        carte.pack(fill="x", padx=4, pady=5)
+        haut = ctk.CTkFrame(carte, fg_color="transparent")
+        haut.pack(fill="x", padx=12, pady=(8, 0))
+        ctk.CTkLabel(haut, text=f"[{e.get('exercice', '?')}]  {e.get('enonce', '')}",
+                     font=self.font_bold, anchor="w").pack(side="left")
+        ctk.CTkLabel(haut, text=f"{bons}/{total}", font=self.font_bold,
+                     text_color=(VERT if parfait else ROUGE)).pack(side="right")
+        ctk.CTkLabel(carte, text=e.get("date", ""), font=self.font_label,
+                     text_color=GRIS, anchor="w").pack(anchor="w", padx=12)
+        for c in champs:
+            marque = "OK " if c["ok"] else "X  "
+            ctk.CTkLabel(carte, text=f"  {marque}{c['libelle']}  ->  attendu : {c['attendu']}",
+                         font=self.font_label, text_color=(VERT if c["ok"] else ROUGE),
+                         anchor="w").pack(anchor="w", padx=12)
+        if e.get("explications"):
+            ctk.CTkButton(carte, text="Voir les explications", width=170, height=26,
+                          fg_color="transparent", border_width=1, text_color=TEXTE,
+                          command=lambda ex=e["explications"]: self._popup_explications(ex)
+                          ).pack(anchor="w", padx=12, pady=(6, 10))
+        else:
+            ctk.CTkLabel(carte, text="").pack(pady=2)
+
+    def _popup_explications(self, explications):
+        win = ctk.CTkToplevel(self)
+        win.title("Explications")
+        win.geometry("660x470")
+        win.transient(self)
+        win.after(120, win.lift)
+        txt = ctk.CTkTextbox(win, wrap="word", font=self.font_mono)
+        txt.pack(fill="both", expand=True, padx=12, pady=12)
+        txt.insert("1.0", "\n\n".join(explications))
+        txt.configure(state="disabled")
 
     def _effacer(self, win):
-        if messagebox.askyesno("Effacer", "Effacer tout l'historique ?"):
+        if messagebox.askyesno("Effacer", "Effacer tout l'historique ?", parent=win):
             self.historique.clear()
             core.sauver_historique(self.historique)
             win.destroy()
 
+    # --- fenetre statistiques ---
     def ouvrir_stats(self):
-        win = tk.Toplevel(self)
+        win = ctk.CTkToplevel(self)
         win.title("Statistiques")
-        win.geometry("520x460")
+        win.geometry("580x520")
+        win.transient(self)
+        win.after(120, win.lift)
+
         parfaits, total, lignes = agreger_statistiques(self.historique)
         if total == 0:
-            tk.Label(win, text="Pas encore de statistiques.", padx=20, pady=20).pack()
+            ctk.CTkLabel(win, text="Pas encore de statistiques.",
+                         font=self.font_label).pack(padx=20, pady=20)
             return
-        tk.Label(win, text=f"Exercices entierement reussis : {parfaits}/{total}",
-                 font=("Helvetica", 12, "bold")).pack(pady=10)
-        arbre = ttk.Treeview(win, columns=("reussite", "pct"), show="tree headings")
-        arbre.heading("#0", text="Type de question")
-        arbre.heading("reussite", text="Reussite")
-        arbre.heading("pct", text="%")
-        arbre.column("#0", width=280)
-        arbre.column("reussite", width=90, anchor="center")
-        arbre.column("pct", width=70, anchor="center")
-        arbre.pack(fill="both", expand=True, padx=10, pady=10)
-        for lib, bons, tot in lignes:
-            pct = round(100 * bons / tot)
-            arbre.insert("", "end", text=lib, values=(f"{bons}/{tot}", f"{pct} %"))
+
+        ctk.CTkLabel(win, text="Statistiques", font=self.font_h2).pack(anchor="w", padx=16, pady=(14, 2))
+        ctk.CTkLabel(win, text=f"Exercices entierement reussis : {parfaits}/{total}",
+                     font=self.font_bold).pack(anchor="w", padx=16, pady=(0, 8))
+
+        liste = ctk.CTkScrollableFrame(win, label_text="Taux de reussite par type de question")
+        liste.pack(fill="both", expand=True, padx=12, pady=8)
+        liste.grid_columnconfigure(1, weight=1)
+        for i, (lib, bons, tot) in enumerate(lignes):
+            pct = bons / tot if tot else 0
+            ctk.CTkLabel(liste, text=lib, anchor="w", font=self.font_label).grid(
+                row=i, column=0, sticky="w", padx=(4, 10), pady=7)
+            barre = ctk.CTkProgressBar(liste)
+            barre.set(pct)
+            barre.grid(row=i, column=1, sticky="ew", padx=10, pady=7)
+            ctk.CTkLabel(liste, text=f"{bons}/{tot}  ({round(pct * 100)} %)", anchor="e",
+                         font=self.font_label).grid(row=i, column=2, sticky="e", padx=(10, 4), pady=7)
 
 
 def main():

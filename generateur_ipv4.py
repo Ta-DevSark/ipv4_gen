@@ -127,6 +127,119 @@ def normaliser(texte):
 
 
 # ---------------------------------------------------------------------------
+# Conversion entre bases (2 / 10 / 16)
+# ---------------------------------------------------------------------------
+NOM_BASE = {2: "binaire", 10: "decimal", 16: "hexadecimal"}
+_CHIFFRES_BASE = {2: "01", 10: "0123456789", 16: "0123456789abcdef"}
+
+
+def parse_nombre(texte, base):
+    """Analyse un nombre ecrit dans la base donnee (2, 10 ou 16).
+
+    Tolere les espaces et les prefixes 0b / 0x ; l'hexadecimal est insensible
+    a la casse. Renvoie un entier >= 0, ou None si la saisie est invalide pour
+    cette base.
+    """
+    if texte is None or base not in _CHIFFRES_BASE:
+        return None
+    t = texte.strip().lower().replace(" ", "")
+    if base == 2 and t.startswith("0b"):
+        t = t[2:]
+    elif base == 16 and t.startswith("0x"):
+        t = t[2:]
+    if not t:
+        return None
+    chiffres = _CHIFFRES_BASE[base]
+    if any(c not in chiffres for c in t):
+        return None
+    return int(t, base)
+
+
+def convertir_base(n, base_cible):
+    """Represente l'entier n (>= 0) dans la base cible, sans prefixe.
+    Hexadecimal en majuscules."""
+    if base_cible == 2:
+        return format(n, "b")
+    if base_cible == 16:
+        return format(n, "X")
+    return str(n)
+
+
+def _etape_vers_decimal(n, base_source):
+    """(titre, lignes) : conversion base_source -> decimal par les poids."""
+    chiffres = convertir_base(n, base_source)
+    nb = len(chiffres)
+    sym, num = [], []
+    for i, c in enumerate(chiffres):
+        p = nb - 1 - i
+        sym.append(f"{c}x{base_source}^{p}")
+        num.append(str(int(c, base_source) * (base_source ** p)))
+    titre = f"{NOM_BASE[base_source]} -> decimal (somme des poids de chaque position)"
+    detail = [
+        f"   {chiffres} = {' + '.join(sym)}",
+        f"   {' ' * len(chiffres)} = {' + '.join(num)} = {n}",
+    ]
+    return titre, detail
+
+
+def _etape_depuis_decimal(n, base_cible):
+    """(titre, lignes) : conversion decimal -> base_cible par divisions."""
+    titre = (f"decimal -> {NOM_BASE[base_cible]} (divisions successives par "
+             f"{base_cible}, restes lus du bas vers le haut)")
+    if n == 0:
+        return titre, ["   0  ->  0"]
+    detail = []
+    q = n
+    restes = []
+    while q > 0:
+        r = q % base_cible
+        symbole = convertir_base(r, base_cible)
+        note = f" (={symbole})" if (base_cible == 16 and r >= 10) else ""
+        detail.append(f"   {q} / {base_cible} = {q // base_cible} reste {r}{note}")
+        restes.append(symbole)
+        q //= base_cible
+    detail.append(f"   -> {''.join(reversed(restes))}")
+    return titre, detail
+
+
+def _note_raccourci(base_source, base_cible):
+    if {base_source, base_cible} == {2, 16}:
+        return ("  Astuce binaire <-> hexa : 1 chiffre hexa = 4 bits "
+                "(A=1010, F=1111).\n   On groupe les bits par 4 a partir de la droite.")
+    return None
+
+
+def expliquer_conversion(n, base_source, base_cible):
+    """Texte pas a pas expliquant la conversion de n entre deux bases.
+
+    Methode generale : on passe par le decimal comme pivot (source -> decimal,
+    puis decimal -> cible). Une astuce est ajoutee pour binaire <-> hexa.
+    """
+    src = convertir_base(n, base_source)
+    cible = convertir_base(n, base_cible)
+    entete = (f"  {src} (base {base_source}, {NOM_BASE[base_source]})  =  "
+              f"{cible} (base {base_cible}, {NOM_BASE[base_cible]})")
+    if base_source == base_cible:
+        return entete + "\n  Meme base : aucune conversion necessaire."
+
+    etapes = []
+    if base_source != 10:
+        etapes.append(_etape_vers_decimal(n, base_source))
+    if base_cible != 10:
+        etapes.append(_etape_depuis_decimal(n, base_cible))
+
+    lignes = [entete, ""]
+    for i, (titre, detail) in enumerate(etapes, 1):
+        lignes.append(f"  Etape {i} : {titre}")
+        lignes.extend(detail)
+    note = _note_raccourci(base_source, base_cible)
+    if note:
+        lignes.append("")
+        lignes.append(note)
+    return "\n".join(lignes)
+
+
+# ---------------------------------------------------------------------------
 # Classe et type d'adresse
 # ---------------------------------------------------------------------------
 def classe_ip(premier_octet):

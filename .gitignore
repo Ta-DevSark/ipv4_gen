@@ -1,0 +1,6 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Données de progression générées par l'application (locales)
+historique_exercices.json

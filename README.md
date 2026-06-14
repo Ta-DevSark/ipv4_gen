@@ -1,13 +1,18 @@
-# Générateur d'exercices IPv4
+# Générateur d'exercices réseau
 
-Un outil d'entraînement en Python pour maîtriser les notions de **sous-réseau** : à partir d'une adresse IP et d'un préfixe CIDR (`/N`), on s'exerce à déterminer l'adresse réseau, l'adresse de broadcast, la classe, le type (publique / privée / particulière), le masque, la plage d'hôtes utilisables et le rôle d'une adresse.
+Un outil d'entraînement en Python pour les **bases de réseau**. Son cœur porte sur le **sous-réseau IPv4** : à partir d'une adresse IP et d'un préfixe CIDR (`/N`), on s'exerce à déterminer l'adresse réseau, l'adresse de broadcast, la classe, le type (publique / privée / particulière), le masque, la plage d'hôtes utilisables et le rôle d'une adresse.
 
-L'outil existe en **deux versions interchangeables** qui partagent le même historique :
+Il propose en plus :
 
-- une version **terminal** (menu en ligne de commande) ;
-- une version **interface graphique** (fenêtre tkinter).
+- des **questions de cours** (théorie réseau) à réponse libre, avec affichage de la réponse modèle à la demande ;
+- un **convertisseur de bases** binaire / décimal / hexadécimal, avec la méthode pas à pas.
 
-Chaque réponse est corrigée et accompagnée d'une **explication détaillée pas à pas**, et toute la progression est sauvegardée dans un fichier 'historique_exercices.json' pour relecture.
+L'outil existe en **deux versions** qui partagent le même historique :
+
+- une version **terminal** (menu en ligne de commande : exercices IPv4 et conversion de masque) ;
+- une version **interface graphique moderne** (customtkinter) organisée en quatre sections : *Sous-réseau IPv4*, *Masque ↔ /N*, *Questions de cours* et *Conversion de bases*.
+
+Chaque réponse d'exercice IPv4 est corrigée et accompagnée d'une **explication détaillée pas à pas**, et la progression est sauvegardée dans un fichier `historique_exercices.json` pour relecture.
 
 ---
 
@@ -51,14 +56,17 @@ Chaque réponse est corrigée et accompagnée d'une **explication détaillée pa
 - **Statistiques** de réussite par type de question, pour cibler ses points faibles.
 - Deux **modes de questions** : `base` (4 questions) ou `complet` (toutes les questions).
 - Trois niveaux de **difficulté**.
-- Aucune dépendance externe : uniquement la bibliothèque standard de Python.
+- **Questions de cours** (version graphique) : 20 questions de théorie réseau, réponse libre puis bouton « Montrer la réponse ».
+- **Convertisseur de bases** (version graphique) : binaire / décimal / hexadécimal dans tous les sens, avec la méthode détaillée.
+- **Thème clair / sombre** dans la version graphique.
+- Cœur de calcul et version terminal **sans dépendance externe** ; la version graphique nécessite seulement `customtkinter`.
 
 ---
 
 ## Prérequis
 
 - **Python 3.6 ou plus récent**.
-- Pour la version graphique uniquement : **tkinter** (inclus par défaut avec Python sous Windows et macOS ; sous Linux voir la section [Dépannage](#dépannage)).
+- Pour la version graphique : **customtkinter** (`pip install customtkinter`), qui s'appuie sur **tkinter** (inclus par défaut avec Python sous Windows et macOS ; sous Linux voir la section [Dépannage](#dépannage)).
 
 Vérifier la version de Python :
 
@@ -77,9 +85,15 @@ git clone https://github.com/<votre-compte>/<votre-depot>.git
 cd <votre-depot>
 ```
 
-> **Important :** les deux fichiers `generateur_ipv4.py` et `generateur_ipv4_gui.py` doivent rester **dans le même dossier**, car la version graphique importe la logique de calcul de la version terminal.
+> **Important :** les fichiers `generateur_ipv4.py`, `generateur_ipv4_gui.py` et `questions_cours.py` doivent rester **dans le même dossier**, car la version graphique importe la logique de calcul et les questions.
 
-Aucune installation de paquet n'est nécessaire.
+Pour la version **terminal**, aucune installation de paquet n'est nécessaire.
+
+Pour la version **graphique**, installer customtkinter :
+
+```bash
+pip install customtkinter
+```
 
 ---
 
@@ -116,6 +130,16 @@ Tiré au sort dans **les deux sens** :
 
 - on donne `/N` → trouver le masque décimal (ex. `/26` → `255.255.255.192`) ;
 - on donne le masque décimal → trouver la notation `/N` (ex. `255.255.254.0` → `/23`).
+
+### 3. Questions de cours (version graphique)
+
+20 questions de théorie réseau (architecture von Neumann, modèle OSI / TCP-IP, switching / routing, câblage, TCP / UDP, DHCP, VoIP, DNS…). On écrit librement sa réponse dans la zone de texte, puis le bouton **« Montrer la réponse »** affiche une réponse modèle. La navigation **Précédent / Suivant / Aléatoire** permet de parcourir les 20 questions.
+
+> Ces questions sont **auto-évaluées** : réponses ouvertes, donc ni notées ni enregistrées dans l'historique. Les questions et leurs réponses sont stockées dans `questions_cours.py` et peuvent être modifiées librement.
+
+### 4. Conversion de bases (version graphique)
+
+Un convertisseur **binaire ↔ décimal ↔ hexadécimal** : on saisit un nombre, on choisit sa base d'origine (2, 10 ou 16) et la base cible, et l'outil affiche le résultat ainsi que la **méthode pas à pas** (passage par le décimal, divisions successives, et l'astuce des groupes de 4 bits pour binaire ↔ hexa).
 
 ---
 
@@ -159,7 +183,7 @@ La casse et les accents sont ignorés. Plusieurs synonymes sont acceptés :
 - Chaque entrée contient l'énoncé, la date, les réponses attendues, le résultat de chaque champ **et les explications complètes** de l'exercice.
 - Les **statistiques** indiquent le nombre d'exercices entièrement réussis et le taux de réussite **par type de question**, ce qui permet de repérer précisément ses points faibles (par exemple le broadcast, le masque ou le rôle).
 
-En interface graphique, la fenêtre « Historique » propose un arbre des exercices (dépliable pour voir le détail des champs) ainsi qu'un panneau affichant les explications de l'exercice sélectionné.
+En interface graphique, la fenêtre « Historique » liste les exercices sous forme de cartes (énoncé, date, score et détail des champs), chacune offrant un bouton « Voir les explications ». La fenêtre « Statistiques » affiche le taux de réussite par type de question sous forme de barres de progression.
 
 ---
 
@@ -221,8 +245,9 @@ Pour trouver l'adresse réseau et le broadcast à partir d'une adresse + `/N` :
 
 ```
 .
-├── generateur_ipv4.py        # Version terminal + logique de calcul (cœur réutilisable)
-├── generateur_ipv4_gui.py    # Interface graphique (tkinter), importe le cœur
+├── generateur_ipv4.py        # Version terminal + logique de calcul (cœur réutilisable, conversions de bases incluses)
+├── generateur_ipv4_gui.py    # Interface graphique (customtkinter), importe le cœur
+├── questions_cours.py        # Données des 20 questions de cours (modifiables)
 ├── historique_exercices.json # Créé automatiquement après le 1er exercice
 └── README.md
 ```
@@ -230,6 +255,17 @@ Pour trouver l'adresse réseau et le broadcast à partir d'une adresse + `/N` :
 ---
 
 ## Dépannage
+
+**La fenêtre s'ouvre et se referme aussitôt / `ModuleNotFoundError: No module named 'customtkinter'`**
+
+customtkinter n'est pas installé **pour l'interpréteur qui lance le script**. Sous Windows, plusieurs versions de Python peuvent coexister : un double-clic (ou le lanceur `py`) n'utilise pas forcément le même Python que `pip` dans votre terminal. Installez customtkinter **dans l'interpréteur réellement utilisé** :
+
+```bash
+py -m pip install customtkinter      # lanceur Windows (souvent utilisé au double-clic)
+python -m pip install customtkinter  # ou l'interpréteur de votre terminal
+```
+
+> L'application affiche désormais une boîte de dialogue indiquant **le chemin exact de l'interpréteur** et la commande `pip` à lancer, au lieu de se fermer silencieusement.
 
 **`ModuleNotFoundError: No module named 'tkinter'` (version graphique, sous Linux)**
 
