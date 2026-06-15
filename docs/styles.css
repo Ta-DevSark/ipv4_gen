@@ -108,7 +108,7 @@ button.btn:disabled { opacity: .5; cursor: default; transform: none; }
   border: 1px solid var(--border); border-radius: 10px; padding: .75rem;
   margin-top: .8rem; overflow-x: auto;
 }
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 /* ====== Questions de cours ====== */
 .q-enonce { font-size: 1rem; font-weight: 600; margin: .3rem 0 0; white-space: pre-wrap; }
