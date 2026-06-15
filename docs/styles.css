@@ -1,0 +1,168 @@
+/* ====== Theme (clair par defaut, sombre via systeme ou bouton) ====== */
+:root {
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent-text: #ffffff;
+  --ok: #15803d;
+  --err: #dc2626;
+  --field: #f8fafc;
+  --shadow: 0 1px 3px rgba(15, 23, 42, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1120; --card: #161e2e; --text: #e7ecf3; --muted: #94a3b8;
+    --border: #283449; --accent: #3b82f6; --ok: #4ade80; --err: #f87171;
+    --field: #0f1626; --shadow: 0 1px 3px rgba(0, 0, 0, .4);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1120; --card: #161e2e; --text: #e7ecf3; --muted: #94a3b8;
+  --border: #283449; --accent: #3b82f6; --ok: #4ade80; --err: #f87171;
+  --field: #0f1626; --shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ====== En-tete ====== */
+header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: .5rem;
+  padding: .7rem 1rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { font-size: 1.05rem; margin: 0; flex: 1; }
+header .sub { color: var(--muted); font-weight: 400; font-size: .8rem; }
+.icon-btn {
+  border: 1px solid var(--border); background: var(--field); color: var(--text);
+  border-radius: 10px; min-width: 42px; height: 38px; font-size: 1.05rem;
+  cursor: pointer; padding: 0 .6rem;
+}
+.icon-btn:active { transform: scale(.96); }
+
+/* ====== Contenu ====== */
+main { padding: 1rem; padding-bottom: 5.5rem; max-width: 760px; margin: 0 auto; }
+.vue { display: none; }
+.vue.active { display: block; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow);
+}
+.card h2 { margin: 0 0 .6rem; font-size: 1rem; }
+.muted { color: var(--muted); }
+.hint { color: var(--muted); font-size: .85rem; margin: .2rem 0 .8rem; }
+
+/* ====== Controles ====== */
+label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .25rem; }
+.row { display: flex; gap: .6rem; flex-wrap: wrap; }
+.row > div { flex: 1; min-width: 130px; }
+
+input[type="text"], select, textarea {
+  width: 100%; padding: .65rem .7rem; font-size: 1rem; color: var(--text);
+  background: var(--field); border: 1px solid var(--border); border-radius: 10px;
+  font-family: inherit;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+textarea { resize: vertical; min-height: 90px; }
+
+button.btn {
+  appearance: none; border: none; cursor: pointer;
+  background: var(--accent); color: var(--accent-text);
+  border-radius: 10px; padding: .7rem 1rem; font-size: .95rem; font-weight: 600;
+}
+button.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+button.btn:active { transform: scale(.98); }
+button.btn:disabled { opacity: .5; cursor: default; transform: none; }
+.actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .4rem; }
+
+/* ====== Enonce / champs d'exercice ====== */
+.enonce {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 1.15rem; font-weight: 700; margin: .2rem 0 .9rem; word-break: break-word;
+}
+.champ { margin-bottom: .8rem; }
+.champ label { font-size: .9rem; color: var(--text); }
+.statut { display: block; margin-top: .25rem; font-size: .85rem; min-height: 1.1em; word-break: break-word; }
+.statut.ok, .score.ok, .resultat.ok { color: var(--ok); }
+.statut.err, .score.err, .resultat.err { color: var(--err); }
+.score { font-weight: 700; margin-top: .6rem; min-height: 1.2em; }
+
+/* ====== Blocs d'explication / methode (monospace, defilables) ====== */
+.expl {
+  white-space: pre-wrap; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: .82rem; line-height: 1.4; background: var(--field);
+  border: 1px solid var(--border); border-radius: 10px; padding: .75rem;
+  margin-top: .8rem; overflow-x: auto;
+}
+.hidden { display: none; }
+
+/* ====== Questions de cours ====== */
+.q-enonce { font-size: 1rem; font-weight: 600; margin: .3rem 0 0; white-space: pre-wrap; }
+.q-solution {
+  white-space: pre-wrap; background: var(--field); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: 10px; padding: .75rem; margin-top: .3rem;
+}
+.q-nav { display: flex; gap: .5rem; align-items: center; margin-bottom: .6rem; }
+.q-nav .compteur { font-weight: 700; flex: 1; font-size: .95rem; }
+
+/* ====== Conversion de bases ====== */
+.resultat {
+  font-family: ui-monospace, Consolas, monospace; font-size: 1.8rem; font-weight: 700;
+  word-break: break-all; margin: .2rem 0;
+}
+
+/* ====== Navigation bas ====== */
+nav.bottom {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+  display: flex; background: var(--card); border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+nav.bottom button {
+  flex: 1; border: none; background: transparent; color: var(--muted);
+  padding: .55rem .2rem .7rem; font-size: .7rem; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+}
+nav.bottom button .ico { font-size: 1.25rem; line-height: 1; }
+nav.bottom button.active { color: var(--accent); }
+
+/* ====== Overlay stats ====== */
+.overlay {
+  position: fixed; inset: 0; z-index: 20; background: rgba(15, 23, 42, .55);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.overlay .sheet {
+  background: var(--card); width: 100%; max-width: 760px; max-height: 85vh; overflow-y: auto;
+  border-radius: 16px 16px 0 0; padding: 1rem 1rem 2rem;
+}
+.sheet-head { display: flex; align-items: center; margin-bottom: .6rem; }
+.sheet-head h2 { flex: 1; margin: 0; font-size: 1.1rem; }
+.stats-resume { font-weight: 700; }
+.stats-corps h3 { font-size: .9rem; margin: 1rem 0 .5rem; color: var(--muted); }
+.stat-ligne { display: flex; align-items: center; gap: .6rem; margin: .35rem 0; font-size: .85rem; }
+.stat-lib { flex: 1; min-width: 0; }
+.stat-val { width: 95px; text-align: right; color: var(--muted); white-space: nowrap; }
+.barre { width: 90px; height: 8px; background: var(--field); border-radius: 5px; overflow: hidden; flex-shrink: 0; }
+.barre span { display: block; height: 100%; background: var(--accent); }
+.hist-ligne { display: flex; gap: .5rem; align-items: baseline; padding: .3rem 0; border-top: 1px solid var(--border); font-size: .82rem; }
+.hist-score { font-weight: 700; width: 34px; flex-shrink: 0; }
+.hist-enonce { flex: 1; font-family: ui-monospace, Consolas, monospace; word-break: break-all; }
+.hist-date { font-size: .72rem; flex-shrink: 0; }
+
+@media (min-width: 600px) {
+  .resultat { font-size: 2.1rem; }
+  .barre { width: 140px; }
+}

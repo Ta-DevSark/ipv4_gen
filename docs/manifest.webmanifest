@@ -1,0 +1,15 @@
+{
+  "name": "Exercices réseau IPv4",
+  "short_name": "Réseau IPv4",
+  "description": "Entraînement aux bases de réseau : sous-réseau IPv4, masque, questions de cours et conversion de bases.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1120",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

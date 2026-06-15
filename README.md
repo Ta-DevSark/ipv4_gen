@@ -16,6 +16,17 @@ Chaque réponse d'exercice IPv4 est corrigée et accompagnée d'une **explicatio
 
 ---
 
+## Version web (mobile)
+
+Une **version web** se trouve dans le dossier [`docs/`](docs/) et fonctionne sur téléphone (pensée pour un Galaxy S21+) : on ouvre l'adresse dans le navigateur, puis « Ajouter à l'écran d'accueil » pour l'utiliser comme une appli, **hors-ligne** comprise.
+
+- **En ligne (GitHub Pages)** : https://ta-devsark.github.io/ipv4_gen/
+- **En local** : `python -m http.server --directory docs`, puis ouvrir http://localhost:8000/
+
+Elle reprend les quatre sections (sous-réseau IPv4, masque ↔ /N, questions de cours, conversion de bases) en **JavaScript pur, sans dépendance**. L'historique des exercices notés est conservé dans le navigateur (localStorage). La logique de calcul est portée à l'identique depuis `generateur_ipv4.py`.
+
+---
+
 ## Conseils pour un apprentissage optimal
 
 1. **Commencer en difficulté « 4e octet »**, où tout se joue sur le dernier nombre : c'est le cas le plus simple à visualiser.

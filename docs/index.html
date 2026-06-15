@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Exercices réseau IPv4</title>
+  <meta name="description" content="Entraînement aux bases de réseau : sous-réseau IPv4, masque, questions de cours et conversion de bases.">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+  <header>
+    <h1>Réseau IPv4 <span class="sub">— entraînement</span></h1>
+    <button id="stats-btn" class="icon-btn" title="Statistiques" aria-label="Statistiques">📊</button>
+    <button id="theme-btn" class="icon-btn" title="Thème clair / sombre" aria-label="Thème">🌙</button>
+  </header>
+
+  <main>
+    <!-- ===== Sous-réseau IPv4 ===== -->
+    <section id="vue-ipv4" class="vue">
+      <div class="card">
+        <div class="row">
+          <div>
+            <label for="ipv4-mode">Mode</label>
+            <select id="ipv4-mode">
+              <option value="base">Base (réseau, broadcast, classe, type)</option>
+              <option value="complet">Complet (toutes les questions)</option>
+            </select>
+          </div>
+          <div>
+            <label for="ipv4-diff">Difficulté</label>
+            <select id="ipv4-diff">
+              <option value="o4">4e octet (/25–/30)</option>
+              <option value="o3">3e octet (/17–/24)</option>
+              <option value="mix" selected>Mixte (/16–/30)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="ipv4-enonce" class="enonce"></div>
+        <div id="ipv4-champs"></div>
+        <div class="actions">
+          <button id="ipv4-verifier" class="btn">Vérifier</button>
+          <button id="ipv4-nouveau" class="btn ghost">Nouvel exercice</button>
+        </div>
+        <div id="ipv4-score" class="score"></div>
+        <div id="ipv4-expl" class="expl hidden"></div>
+      </div>
+    </section>
+
+    <!-- ===== Masque <-> /N ===== -->
+    <section id="vue-masque" class="vue">
+      <div class="card">
+        <h2>Conversion de masque ( /N ↔ masque décimal )</h2>
+        <div id="masque-enonce" class="enonce"></div>
+        <div id="masque-champs"></div>
+        <div class="actions">
+          <button id="masque-verifier" class="btn">Vérifier</button>
+          <button id="masque-nouveau" class="btn ghost">Nouvelle conversion</button>
+        </div>
+        <div id="masque-score" class="score"></div>
+        <div id="masque-expl" class="expl hidden"></div>
+      </div>
+    </section>
+
+    <!-- ===== Questions de cours ===== -->
+    <section id="vue-questions" class="vue">
+      <div class="card">
+        <div class="q-nav">
+          <span id="q-compteur" class="compteur"></span>
+          <button id="q-precedent" class="btn ghost">◀</button>
+          <button id="q-aleatoire" class="btn ghost">Aléa.</button>
+          <button id="q-suivant" class="btn ghost">▶</button>
+        </div>
+        <div id="q-enonce" class="q-enonce"></div>
+      </div>
+      <div class="card">
+        <label for="q-reponse">Ta réponse</label>
+        <textarea id="q-reponse" placeholder="Écris ta réponse ici…"></textarea>
+        <div class="actions">
+          <button id="q-montrer" class="btn">Montrer la réponse</button>
+        </div>
+        <label style="margin-top:.8rem">Réponse modèle</label>
+        <div id="q-solution" class="q-solution hidden"></div>
+      </div>
+    </section>
+
+    <!-- ===== Conversion de bases ===== -->
+    <section id="vue-bases" class="vue">
+      <div class="card">
+        <h2>Conversion binaire / décimal / hexadécimal</h2>
+        <label for="conv-nombre">Nombre</label>
+        <input id="conv-nombre" type="text" inputmode="text" autocomplete="off" autocapitalize="characters"
+          spellcheck="false" placeholder="ex. 1010   255   FF">
+        <div class="row" style="margin-top:.7rem">
+          <div>
+            <label for="conv-src">De la base</label>
+            <select id="conv-src">
+              <option value="2">Binaire (2)</option>
+              <option value="10" selected>Décimal (10)</option>
+              <option value="16">Hexadécimal (16)</option>
+            </select>
+          </div>
+          <div>
+            <label for="conv-dst">Vers la base</label>
+            <select id="conv-dst">
+              <option value="2" selected>Binaire (2)</option>
+              <option value="10">Décimal (10)</option>
+              <option value="16">Hexadécimal (16)</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="conv-convertir" class="btn">Convertir</button>
+          <button id="conv-inverser" class="btn ghost">⇄ Inverser</button>
+        </div>
+      </div>
+      <div class="card">
+        <label>Résultat</label>
+        <div id="conv-resultat" class="resultat">—</div>
+        <label style="margin-top:.6rem">Méthode pas à pas</label>
+        <div id="conv-methode" class="expl hidden"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom">
+    <button id="nav-ipv4"><span class="ico">🌐</span>IPv4</button>
+    <button id="nav-masque"><span class="ico">🔢</span>Masque</button>
+    <button id="nav-questions"><span class="ico">❓</span>Cours</button>
+    <button id="nav-bases"><span class="ico">🔀</span>Bases</button>
+  </nav>
+
+  <!-- ===== Overlay statistiques ===== -->
+  <div id="stats-overlay" class="overlay hidden">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2>Statistiques</h2>
+        <button id="stats-fermer" class="icon-btn" aria-label="Fermer">✕</button>
+      </div>
+      <div id="stats-corps" class="stats-corps"></div>
+      <div class="actions" style="margin-top:1rem">
+        <button id="stats-effacer" class="btn ghost">Effacer l'historique</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./questions.js"></script>
+  <script src="./app.js"></script>
+</body>
+
+</html>

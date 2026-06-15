@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Réseau IPv4">
+  <rect width="512" height="512" fill="#2563eb"/>
+  <text x="256" y="250" font-family="ui-monospace, Consolas, monospace" font-size="190"
+        font-weight="700" fill="#ffffff" text-anchor="middle">IP</text>
+  <text x="256" y="360" font-family="ui-monospace, Consolas, monospace" font-size="92"
+        font-weight="700" fill="#bfdbfe" text-anchor="middle">/24</text>
+</svg>
