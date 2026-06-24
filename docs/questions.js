@@ -14,7 +14,7 @@ const QUESTIONS = [
   },
   {
     q: `3. Quelle vitesse ira un bus PCIe 4.0 x8 ?`,
-    r: `PCIe 4.0 fournit environ 2 Go/s par ligne (lane). En x8 (8 lignes) : 8 x 2 = environ 16 Go/s par sens (plus precisement ~15,75 Go/s).`
+    r: `PCIe 4.0 fournit environ 2 Go/s par ligne (lane) x8 = 16 Go/s par sens (plus precisement ~15,75 Go/s).`
   },
   {
     q: `4. Le modele de reference OSI repartit les fonctionnalites necessaires a la communication en 7 couches. Enumerez ces couches dans l'ordre (de la couche 1 a la couche 7) et identifiez celle responsable de l'adressage physique (MAC).`,
@@ -22,7 +22,7 @@ const QUESTIONS = [
   },
   {
     q: `5. Historiquement, le modele TCP/IP s'est impose face au modele OSI pour le developpement d'Internet. En combien de couches le modele TCP/IP classique est-il divise, et comment se nomment-elles ?`,
-    r: `4 couches :\n1. Acces reseau (hote-a-reseau / liaison)\n2. Internet\n3. Transport\n4. Application.`
+    r: `5 couches :\n1. Physique\n2. liaison\n3. Internet\n4. Transport\n5. Application.`
   },
   {
     q: `6. Dans un reseau Ethernet, un Hub (concentrateur) diffuse aveuglement les donnees recues a tous les autres hotes. Comment le Switch (commutateur) resout-il ce probleme de diffusion systematique pour optimiser la communication ?`,
@@ -30,7 +30,7 @@ const QUESTIONS = [
   },
   {
     q: `7. Au sein des peripheriques reseau, on distingue clairement le « Switching » du « Routing ». Definissez brievement chacune de ces deux fonctions.`,
-    r: `Switching (commutation) : aiguiller des trames a l'interieur d'un meme reseau local (LAN), a partir des adresses MAC (couche 2).\n\nRouting (routage) : faire transiter des paquets entre des reseaux differents, a partir des adresses IP (couche 3), en choisissant le meilleur chemin.`
+    r: `Switching : faciliter la communication à l'intérieur d'un même réseau à partir des adresses MAC (couche 2)\n\nRouting : faciliter la communication entre réseaux différents à partir des adresses IP (couche 3)`
   },
   {
     q: `8. Les cables Ethernet a paires torsadees peuvent utiliser les normes de cablage T568A et T568B. Dans quel cas d'utilisation technique precis devez-vous utiliser un cable croise, c'est-a-dire un cable utilisant une norme differente a chaque extremite ?`,
@@ -38,7 +38,7 @@ const QUESTIONS = [
   },
   {
     q: `9. Un cable a paires torsadees de Categorie 6 (Cat6) permet d'atteindre des debits allant jusqu'a 10 Gbit/s. Quelle est la limite theorique de longueur de cable pour pouvoir garantir ce debit maximal ?`,
-    r: `55 metres pour le 10 Gbit/s (alors qu'en Gigabit on monte jusqu'a 100 m). Pour atteindre 100 m a 10 Gbit/s, il faut passer au Cat6a.`
+    r: `56 metres pour le 10 Gbit/s (alors qu'en Gigabit on monte jusqu'a 100 m). Pour atteindre 100 m a 10 Gbit/s, il faut passer au Cat6a.`
   },
   {
     q: `10. Une adresse IPv4 est une adresse composee de 32 bits. Si l'on convertit ces 32 bits en 4 octets decimaux, quelle est la valeur maximale que peut prendre un octet ?`,
