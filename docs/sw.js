@@ -1,6 +1,6 @@
 /* Service worker : mise en cache de l'app pour un fonctionnement hors-ligne.
  * Strategie cache-first. Incrementer CACHE a chaque mise a jour des fichiers. */
-const CACHE = "ipv4gen-v3";
+const CACHE = "ipv4gen-v4";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js",
   "./questions.js", "./manifest.webmanifest", "./icon.svg",

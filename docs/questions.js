@@ -34,7 +34,7 @@ const QUESTIONS = [
   },
   {
     q: `8. Les cables Ethernet a paires torsadees peuvent utiliser les normes de cablage T568A et T568B. Dans quel cas d'utilisation technique precis devez-vous utiliser un cable croise, c'est-a-dire un cable utilisant une norme differente a chaque extremite ?`,
-    r: `Pour relier directement deux equipements de meme type, qui emettent et recoivent sur les memes broches : par exemple PC <-> PC, switch <-> switch, ou routeur <-> routeur. (Aujourd'hui l'Auto-MDI/MDIX rend le plus souvent le cable croise inutile, l'equipement s'adaptant automatiquement.)`
+    r: `Pour connecter directement deux hôtes de même type (2 PC, 2 switch) sans passer par un switch intermédiaire (émetteur+récepteur)`
   },
   {
     q: `9. Un cable a paires torsadees de Categorie 6 (Cat6) permet d'atteindre des debits allant jusqu'a 10 Gbit/s. Quelle est la limite theorique de longueur de cable pour pouvoir garantir ce debit maximal ?`,
@@ -46,39 +46,39 @@ const QUESTIONS = [
   },
   {
     q: `11. Une adresse IPv4 est logiquement divisee en deux parties : le « net id » et le « host id ». Expliquez comment le masque de sous-reseau permet a un equipement de determiner quelle partie de l'adresse correspond a l'identifiant du reseau.`,
-    r: `Le masque est une suite de bits a 1 (partie reseau) suivie de bits a 0 (partie hote). En effectuant un ET logique (AND) bit a bit entre l'adresse IP et le masque, on isole le net id : les bits en face des 1 du masque sont conserves (identifiant reseau), ceux en face des 0 sont mis a zero (partie hote).`
+    r: `La partie gauche est la traduction en binaire du masque de sous-réseau (/24 = 24 bits à 1).`
   },
   {
     q: `12. Dans les annees 1990, le systeme de classes d'adresses (A, B, C) a ete remplace par le systeme CIDR (Classless Inter-Domain Routing). Quel est le principal avantage apporte par l'agregation des adresses et les masques de longueur variable (VLSM) permis par le CIDR ?`,
-    r: `Une utilisation bien plus efficace de l'espace d'adressage IPv4 : on attribue des blocs de taille adaptee au besoin reel (masques de longueur variable, et plus seulement /8, /16, /24), ce qui evite le gaspillage d'adresses. De plus, l'agregation des routes (super-netting) reduit la taille des tables de routage.`
+    r: `On gaspille moins d'adresses.`
   },
   {
     q: `13. Les adresses privees sont utilisees exclusivement dans des reseaux locaux et ne sont pas routables sur Internet. Un poste est configure avec l'adresse IP 172.25.10.2. Appartient-il a une plage d'adresses privees, et si oui, a quelle classe historique correspond cette plage ?`,
-    r: `Oui, c'est une adresse privee. La plage privee 172.16.0.0 - 172.31.255.255 correspond a la classe B historique ; comme 25 est compris entre 16 et 31, l'adresse 172.25.10.2 en fait partie.`
+    r: `C'est une adresse privée de classe B (172.16.0.0 jusque 172.31.255.255).`
   },
   {
     q: `14. Les protocoles de la couche transport assurent la communication entre les processus. TCP garantit la fiabilite en etablissant une connexion en trois phases. Citez les trois segments echanges (les flags) lors de la phase d'etablissement de cette connexion (« 3-way handshake »).`,
-    r: `SYN -> SYN-ACK -> ACK.\n(1) Le client envoie SYN, (2) le serveur repond SYN-ACK, (3) le client confirme avec ACK.`
+    r: `1. SYN (client envoie)\n2. SYN-ACK (serveur répond)\n3. ACK (client confirme)`
   },
   {
     q: `15. Contrairement a TCP, le protocole UDP fonctionne sans connexion et ne requiert aucune communication prealable. Pour quel type de donnees ou d'application aborde au cours ce fonctionnement est-il particulierement indispensable ?`,
-    r: `Pour les applications en temps reel, ou la rapidite prime sur la fiabilite et ou retransmettre une donnee en retard n'aurait pas de sens : la voix sur IP (VoIP), la diffusion audio/video en streaming, les jeux en ligne (et aussi le DNS).`
+    r: `La diffusion audio/vidéo en streaming. UDP = pas fiable, TCP = fiable`
   },
   {
     q: `16. Le protocole DHCP permet l'attribution automatique des parametres IP. Lors de sa recherche initiale de configuration, le client envoie un message DHCP DISCOVER. Quel type d'envoi (Unicast, Multicast ou Broadcast) est utilise pour propager ce premier message sur le reseau ?`,
-    r: `Un Broadcast. Le client n'a pas encore d'adresse IP et ne connait pas l'adresse du serveur DHCP : il diffuse donc le DISCOVER a tout le reseau (adresse de destination 255.255.255.255).`
+    r: `Broadcast car il ne connait pas les adresses existantes sur le routeur, donc il diffuse à toutes les adresses.\n\ninfo : Multicast (adresses de classe D ou de groupe) envoie l'information à un nombre d'adresses déterminé.`
   },
   {
     q: `17. La Voix sur IP (VoIP) utilise plusieurs protocoles pour fonctionner de concert. Expliquez la repartition des roles entre le protocole SIP et le protocole RTP.`,
-    r: `SIP s'occupe de la signalisation : ouvrir, gerer et fermer la session d'appel (etablissement, sonnerie, raccrochage).\n\nRTP transporte le media lui-meme : le flux audio (et video) de la voix en temps reel, une fois la session etablie.`
+    r: `SIP : protocole de signalisation (ouvrir, gérer et fermer la session)\nRTP : flux audio/vidéo une fois que la connexion est établie en temps réel`
   },
   {
     q: `18. Le protocole SIP s'inspire beaucoup de HTTP, utilisant des methodes textuelles claires. Quelle methode SIP est employee par un client pour demander l'ouverture d'une nouvelle session ?`,
-    r: `La methode INVITE.`
+    r: `La méthode INVITE.`
   },
   {
     q: `19. Le DNS (Domain Name System) associe des noms de domaine a des adresses IP ou a d'autres informations. A quoi servent respectivement les enregistrements DNS de type « A » et les enregistrements de type « MX » ?`,
-    r: `Un enregistrement A associe un nom de domaine a une adresse IPv4 (le « A » pour adresse ; l'equivalent IPv6 est l'enregistrement AAAA).\n\nUn enregistrement MX (Mail eXchange) indique le ou les serveurs de messagerie charges de recevoir les e-mails du domaine.`
+    r: `Type A : Associer un nom de domaine à une adresse IP\nMX : Adresse IP du serveur mail (...@isfce.be)`
   },
   {
     q: `20. Lors d'une seance de TP, vous constatez qu'un poste configure avec l'adresse IP 192.168.1.10 et le masque de sous-reseau 255.255.255.0 ne parvient pas a joindre Internet. Sa passerelle par defaut a ete configuree sur l'adresse 192.168.2.1. En vous basant sur la regle separant l'identifiant reseau (net id) et l'identifiant hote (host id) expliquee au cours, expliquez pourquoi cette configuration empeche techniquement la machine de communiquer avec la passerelle.`,
